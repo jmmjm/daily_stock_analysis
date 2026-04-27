@@ -233,6 +233,13 @@ python main.py --webui-only
 
 > Agent 具體參數、`skill` 命名兼容、多 Agent 模式和預算護欄見 [完整指南](./full-guide.md#本地-webui-管理界面) 與 [LLM 配置指南](./LLM_CONFIG_GUIDE.md)。
 
+## 相關項目 (Related Projects)
+
+DSA 聚焦日常分析報告；以下兩個同系列項目分別覆蓋選股、策略驗證與策略進化，適合按需延伸使用。它們目前獨立維護，後續會優先探索與 DSA 的候選股導入、回測驗證和報告聯動。
+
+- [AlphaSift](https://github.com/ZhuLinsen/alphasift)：多因子選股與全市場掃描，用於從股票池中整理候選標的。
+- [AlphaEvo](https://github.com/ZhuLinsen/alphaevo)：策略回測與自我進化，用於驗證策略規則，並透過迭代探索策略參數與組合。
+
 ## 🗺️ Roadmap
 
 查看已支援的功能和未來規劃：[更新日誌](./CHANGELOG.md)
