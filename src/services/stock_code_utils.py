@@ -55,7 +55,7 @@ def is_code_like(value: str) -> bool:
         return True
     if _strip_exchange_suffix(text) is not None:
         return True
-    if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$", text):
+    if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]{1,2}))?$", text):
         return True
     # Support exchange-prefixed codes: SH600519, SZ000001, HK00700
     if _strip_exchange_prefix(text) is not None:
@@ -77,7 +77,7 @@ def normalize_code(raw: str) -> Optional[str]:
         return None
     if text.isdigit() and len(text) in (5, 6):
         return text
-    if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]))?$", text):
+    if re.match(r"^[A-Z]{1,5}(?:\.(?:US|[A-Z]{1,2}))?$", text):
         return text
     stripped_suffix = _strip_exchange_suffix(text)
     if stripped_suffix is not None:

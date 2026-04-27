@@ -156,11 +156,13 @@ def _is_etf_code(code: str) -> bool:
 
 
 def _market_tag(code: str) -> str:
-    """返回市场标签: cn/us/hk."""
+    """返回市场标签: cn/us/hk/ca."""
     if _is_us_market(code):
         return "us"
     if _is_hk_market(code):
         return "hk"
+    if (code or "").strip().upper().endswith(".TO"):
+        return "ca"
     return "cn"
 
 
@@ -945,16 +947,22 @@ class DataFetcherManager:
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or is_us_stock_code(stock_code)
         is_hk = (not is_us) and _is_hk_market(stock_code)
+        is_ca = stock_code.upper().endswith(".TO")
 
         # 美股（含美股指数）使用 Longbridge/YFinance 特殊路由；港股走下方通用数据源循环
-        if is_us:
-            prefer_lb = self._longbridge_preferred() and not is_us_index
-            source_order = (
-                ["LongbridgeFetcher", "YfinanceFetcher"]
-                if prefer_lb
-                else ["YfinanceFetcher", "LongbridgeFetcher"]
-            )
-            market_label = "美股指数" if is_us_index else "美股"
+        # 加股也走此处路由，固定首选 YfinanceFetcher
+        if is_us or is_ca:
+            if is_ca:
+                source_order = ["YfinanceFetcher"]
+                market_label = "加股"
+            else:
+                prefer_lb = self._longbridge_preferred() and not is_us_index
+                source_order = (
+                    ["LongbridgeFetcher", "YfinanceFetcher"]
+                    if prefer_lb
+                    else ["YfinanceFetcher", "LongbridgeFetcher"]
+                )
+                market_label = "美股指数" if is_us_index else "美股"
 
             for src_name in source_order:
                 for attempt, fetcher in enumerate(fetchers, start=1):
@@ -1166,28 +1174,39 @@ class DataFetcherManager:
         is_us_index = is_us_index_code(stock_code)
         is_us = is_us_index or _is_us_code(stock_code)
         is_hk = (not is_us) and _is_hk_market(stock_code)
+        is_ca = stock_code.upper().endswith(".TO")
 
-        if is_us or is_hk:
-            prefer_lb = self._longbridge_preferred() and not is_us_index
-            if is_us:
-                primary_src = "LongbridgeFetcher" if prefer_lb else "YfinanceFetcher"
-                secondary_src = "YfinanceFetcher" if prefer_lb else "LongbridgeFetcher"
-                market_label = "美股指数" if is_us_index else "美股"
-                primary_kw: dict = {}
-                secondary_kw: dict = {}
+        if is_us or is_hk or is_ca:
+            if is_ca:
+                primary_src = "YfinanceFetcher"
+                secondary_src = ""
+                market_label = "加股"
+                primary_kw = {}
+                secondary_kw = {}
             else:
-                primary_src = "LongbridgeFetcher" if prefer_lb else "AkshareFetcher"
-                secondary_src = "AkshareFetcher" if prefer_lb else "LongbridgeFetcher"
-                market_label = "港股"
-                primary_kw = {"source": "hk"} if primary_src == "AkshareFetcher" else {}
-                secondary_kw = {"source": "hk"} if secondary_src == "AkshareFetcher" else {}
+                prefer_lb = self._longbridge_preferred() and not is_us_index
+                if is_us:
+                    primary_src = "LongbridgeFetcher" if prefer_lb else "YfinanceFetcher"
+                    secondary_src = "YfinanceFetcher" if prefer_lb else "LongbridgeFetcher"
+                    market_label = "美股指数" if is_us_index else "美股"
+                    primary_kw: dict = {}
+                    secondary_kw: dict = {}
+                else:
+                    primary_src = "LongbridgeFetcher" if prefer_lb else "AkshareFetcher"
+                    secondary_src = "AkshareFetcher" if prefer_lb else "LongbridgeFetcher"
+                    market_label = "港股"
+                    primary_kw = {"source": "hk"} if primary_src == "AkshareFetcher" else {}
+                    secondary_kw = {"source": "hk"} if secondary_src == "AkshareFetcher" else {}
 
-            primary_quote = self._try_fetcher_quote(stock_code, primary_src, **primary_kw)
+            primary_quote = self._try_fetcher_quote(stock_code, primary_src, **primary_kw) if primary_src else None
             if primary_quote is not None:
                 logger.info(f"[实时行情] {market_label} {stock_code} 成功获取 (来源: {primary_src})")
-            primary_quote = self._supplement_quote(
-                stock_code, primary_quote, secondary_src, **secondary_kw,
-            )
+            
+            if secondary_src:
+                primary_quote = self._supplement_quote(
+                    stock_code, primary_quote, secondary_src, **secondary_kw,
+                )
+            
             if primary_quote is not None:
                 return primary_quote
             if log_final_failure:

@@ -110,9 +110,9 @@ class YfinanceFetcher(BaseFetcher):
             logger.debug(f"识别为美股指数: {code} -> {yf_symbol}")
             return yf_symbol
 
-        # 美股：1-5 个大写字母（可选 .X 后缀），原样返回
-        if is_us_stock_code(code):
-            logger.debug(f"识别为美股代码: {code}")
+        # 美股：1-5 个大写字母（可选 .X 后缀），原样返回。加股：后缀为 .TO
+        if is_us_stock_code(code) or code.endswith('.TO'):
+            logger.debug(f"识别为美股/加股代码: {code}")
             return code
 
         # 港股：hk前缀 -> .HK后缀
@@ -639,9 +639,11 @@ class YfinanceFetcher(BaseFetcher):
                 index_name=index_name,
             )
 
-        # 仅处理美股股票
-        if not self._is_us_stock(stock_code):
-            logger.debug(f"[Yfinance] {stock_code} 不是美股，跳过")
+        # 仅处理美股股票和加股
+        is_us = self._is_us_stock(stock_code)
+        is_ca = stock_code.strip().upper().endswith(".TO")
+        if not is_us and not is_ca:
+            logger.debug(f"[Yfinance] {stock_code} 不是美股/加股，跳过")
             return None
 
         try:
