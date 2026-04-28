@@ -55,7 +55,23 @@ jobs:
       - name: 创建必要目录
         run: |
           mkdir -p data logs reports
-      
+          
+      - name: 启动本地 SearXNG 搜索服务 (免费无限额)
+        run: |
+          mkdir -p searxng
+          cat <<EOF > searxng/settings.yml
+          search:
+            formats:
+              - html
+              - json
+          server:
+            port: 8080
+            bind_address: "0.0.0.0"
+            secret_key: "github-actions-secret-key"
+          EOF
+          docker run -d --name searxng -p 8080:8080 -v $(pwd)/searxng:/etc/searxng searxng/searxng:latest
+          sleep 10 # 等待服务启动
+          
       - name: 执行股票分析
         env:
           # ==========================================
@@ -198,7 +214,8 @@ jobs:
           SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
           MINIMAX_API_KEYS: ${{ secrets.MINIMAX_API_KEYS }}
           BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
-          SEARXNG_BASE_URLS: ${{ secrets.SEARXNG_BASE_URLS }}
+          SEARXNG_BASE_URLS: "http://127.0.0.1:8080"
+          # SEARXNG_BASE_URLS: ${{ secrets.SEARXNG_BASE_URLS }}
           SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
           
           # ==========================================
