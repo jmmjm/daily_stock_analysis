@@ -819,8 +819,8 @@ class Config:
     schedule_run_immediately: bool = True     # 启动时是否立即执行一次
     run_immediately: bool = True              # 启动时是否立即执行一次（非定时模式）
     market_review_enabled: bool = True        # 是否启用大盘复盘
-    # 大盘复盘市场区域：cn(A股)、us(美股)、both(两者)，us 适合仅关注美股的用户
-    market_review_region: str = "cn"
+    # 大盘复盘市场区域：auto(自动识别)、cn(A股)、us(美股)、both(两者)，us 适合仅关注美股的用户
+    market_review_region: str = "auto"
     # 交易日检查：默认启用，非交易日跳过执行；设为 false 或 --force-run 可强制执行（Issue #373）
     trading_day_check_enabled: bool = True
 
@@ -2010,15 +2010,15 @@ class Config:
 
     @classmethod
     def _parse_market_review_region(cls, value: str) -> str:
-        """解析大盘复盘市场区域，非法值记录警告后回退为 cn"""
+        """解析大盘复盘市场区域，非法值记录警告后回退为 auto"""
         import logging
-        v = (value or 'cn').strip().lower()
-        if v in ('cn', 'us', 'both'):
+        v = (value or 'auto').strip().lower()
+        if v in ('cn', 'us', 'both', 'auto'):
             return v
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'cn'（合法值：cn / us / both）"
+            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'auto'（合法值：auto / cn / us / both）"
         )
-        return 'cn'
+        return 'auto'
 
     @classmethod
     def _parse_md2img_engine(cls, value: str) -> str:

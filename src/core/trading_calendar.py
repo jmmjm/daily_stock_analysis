@@ -54,7 +54,7 @@ def get_market_for_stock(code: str) -> Optional[str]:
 
     from data_provider import is_us_stock_code, is_us_index_code, is_hk_stock_code
 
-    if is_us_stock_code(code) or is_us_index_code(code):
+    if is_us_stock_code(code) or is_us_index_code(code) or code.endswith(".TO"):
         return "us"
     if is_hk_stock_code(code):
         return "hk"
@@ -187,22 +187,43 @@ def get_open_markets_today() -> Set[str]:
 
 
 def compute_effective_region(
-    config_region: str, open_markets: Set[str]
+    config_region: str, open_markets: Set[str], stock_codes: Optional[List[str]] = None
 ) -> Optional[str]:
     """
-    Compute effective market review region given config and open markets.
+    Compute effective market review region given config, open markets, and analyzed stocks.
 
     Args:
-        config_region: From MARKET_REVIEW_REGION ('cn' | 'us' | 'both')
+        config_region: From MARKET_REVIEW_REGION ('auto' | 'cn' | 'us' | 'both')
         open_markets: Markets open today
+        stock_codes: Analyzed stock codes to infer region if config is 'auto'
 
     Returns:
         None: caller uses config default (check disabled)
         '': all relevant markets closed, skip market review
         'cn' | 'us' | 'both': effective subset for today
     """
-    if config_region not in ("cn", "us", "both"):
-        config_region = "cn"
+    if config_region not in ("auto", "cn", "us", "both"):
+        config_region = "auto"
+        
+    if config_region == "auto":
+        if stock_codes:
+            stock_markets = set()
+            for code in stock_codes:
+                mkt = get_market_for_stock(code)
+                if mkt == "cn":
+                    stock_markets.add("cn")
+                elif mkt in ("us", "hk"):
+                    stock_markets.add("us")
+                    
+            if "cn" in stock_markets and "us" in stock_markets:
+                config_region = "both"
+            elif "us" in stock_markets:
+                config_region = "us"
+            else:
+                config_region = "cn"
+        else:
+            config_region = "cn"
+
     if config_region == "cn":
         return "cn" if "cn" in open_markets else ""
     if config_region == "us":
