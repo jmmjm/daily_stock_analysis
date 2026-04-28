@@ -2979,20 +2979,22 @@ class SearchService:
         search_count = 0
 
         is_foreign = self._is_foreign_stock(stock_code)
+        is_ca = stock_code.strip().upper().endswith(".TO")
+        ca_suffix = " TSX Canada" if is_ca else ""
         is_index_etf = self.is_index_or_etf(stock_code, stock_name)
 
         if is_foreign:
             search_dimensions = [
                 {
                     'name': 'latest_news',
-                    'query': f"{stock_name} {stock_code} latest news events",
+                    'query': f"{stock_name} {stock_code} latest news events{ca_suffix}",
                     'desc': '最新消息',
                     'tavily_topic': 'news',
                     'strict_freshness': True,
                 },
                 {
                     'name': 'market_analysis',
-                    'query': f"{stock_name} analyst rating target price report",
+                    'query': f"{stock_name} analyst rating target price report{ca_suffix}",
                     'desc': '机构分析',
                     'tavily_topic': None,
                     'strict_freshness': False,
@@ -3000,8 +3002,8 @@ class SearchService:
                 {
                     'name': 'risk_check',
                     'query': (
-                        f"{stock_name} {stock_code} index performance outlook tracking error"
-                        if is_index_etf else f"{stock_name} risk insider selling lawsuit litigation"
+                        f"{stock_name} {stock_code} index performance outlook tracking error{ca_suffix}"
+                        if is_index_etf else f"{stock_name} risk insider selling lawsuit litigation{ca_suffix}"
                     ),
                     'desc': '风险排查',
                     'tavily_topic': None if is_index_etf else 'news',
@@ -3010,8 +3012,8 @@ class SearchService:
                 {
                     'name': 'earnings',
                     'query': (
-                        f"{stock_name} {stock_code} index performance composition outlook"
-                        if is_index_etf else f"{stock_name} earnings revenue profit growth forecast"
+                        f"{stock_name} {stock_code} index performance composition outlook{ca_suffix}"
+                        if is_index_etf else f"{stock_name} earnings revenue profit growth forecast{ca_suffix}"
                     ),
                     'desc': '业绩预期',
                     'tavily_topic': None,
@@ -3020,8 +3022,8 @@ class SearchService:
                 {
                     'name': 'industry',
                     'query': (
-                        f"{stock_name} {stock_code} index sector allocation holdings"
-                        if is_index_etf else f"{stock_name} industry competitors market share outlook"
+                        f"{stock_name} {stock_code} index sector allocation holdings{ca_suffix}"
+                        if is_index_etf else f"{stock_name} industry competitors market share outlook{ca_suffix}"
                     ),
                     'desc': '行业分析',
                     'tavily_topic': None,

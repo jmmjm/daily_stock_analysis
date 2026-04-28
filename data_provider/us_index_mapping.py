@@ -40,6 +40,10 @@ US_INDEX_MAPPING = {
     # 罗素 2000
     'RUT': ('^RUT', '罗素2000指数'),
     '^RUT': ('^RUT', '罗素2000指数'),
+    # S&P/TSX Composite (Canadian)
+    'GSPTSE': ('^GSPTSE', 'TSX综合指数'),
+    '^GSPTSE': ('^GSPTSE', 'TSX综合指数'),
+    'TSX': ('^GSPTSE', 'TSX综合指数'),
 }
 
 

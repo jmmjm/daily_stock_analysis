@@ -415,8 +415,8 @@ class StockAnalysisPipeline:
             else:
                 logger.info(f"{stock_name}({code}) 搜索服务不可用，跳过情报搜索")
 
-            # Step 4.5: Social sentiment intelligence (US stocks only)
-            if self.social_sentiment_service is not None and self.social_sentiment_service.is_available and is_us_stock_code(code):
+            # Step 4.5: Social sentiment intelligence (US/CA stocks only)
+            if self.social_sentiment_service is not None and self.social_sentiment_service.is_available and (is_us_stock_code(code) or code.endswith(".TO")):
                 try:
                     social_context = self.social_sentiment_service.get_social_context(code)
                     if social_context:
@@ -798,7 +798,7 @@ class StockAnalysisPipeline:
             # Agent path: inject social sentiment as news_context so both
             # executor (_build_user_message) and orchestrator (ctx.set_data)
             # can consume it through the existing news_context channel
-            if self.social_sentiment_service is not None and self.social_sentiment_service.is_available and is_us_stock_code(code):
+            if self.social_sentiment_service is not None and self.social_sentiment_service.is_available and (is_us_stock_code(code) or code.endswith(".TO")):
                 try:
                     social_context = self.social_sentiment_service.get_social_context(code)
                     if social_context:

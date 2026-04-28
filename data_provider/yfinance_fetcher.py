@@ -345,9 +345,9 @@ class YfinanceFetcher(BaseFetcher):
         return None
 
     def _get_us_main_indices(self, yf) -> Optional[List[Dict[str, Any]]]:
-        """获取美股主要指数行情（SPX、IXIC、DJI、VIX），复用 _fetch_yf_ticker_data"""
-        # 大盘复盘所需核心美股指数
-        us_indices = ['SPX', 'IXIC', 'DJI', 'VIX']
+        """获取美股/加股主要指数行情（SPX、IXIC、DJI、VIX、GSPTSE），复用 _fetch_yf_ticker_data"""
+        # 大盘复盘所需核心美加指数
+        us_indices = ['SPX', 'IXIC', 'DJI', 'VIX', 'GSPTSE']
         results = []
         try:
             for code in us_indices:
@@ -609,28 +609,28 @@ class YfinanceFetcher(BaseFetcher):
                 total_mv=None,
                 circ_mv=None,
             )
-            logger.info(f"[Yfinance] 获取美股指数 {user_code} 实时行情成功: 价格={price}")
+            logger.info(f"[Yfinance] 获取指数 {user_code} 实时行情成功: 价格={price}")
             return quote
         except Exception as e:
-            logger.warning(f"[Yfinance] 获取美股指数 {user_code} 实时行情失败: {e}")
+            logger.warning(f"[Yfinance] 获取指数 {user_code} 实时行情失败: {e}")
             return None
 
     def get_realtime_quote(self, stock_code: str) -> Optional[UnifiedRealtimeQuote]:
         """
-        获取美股/美股指数实时行情数据
+        获取美股/加股/指数实时行情数据
 
-        支持美股股票（AAPL、TSLA）和美股指数（SPX、DJI 等）。
-        数据来源：yfinance Ticker.info
+        支持美股/加股股票（AAPL、TSLA、SHOP.TO）和指数（SPX、DJI、TSX 等）。
 
         Args:
-            stock_code: 美股代码或指数代码，如 'AMD', 'AAPL', 'SPX', 'DJI'
+            stock_code: 代码，如 'AMD', 'AAPL', 'SPX', 'DJI', 'TSX', 'SHOP.TO'
 
         Returns:
             UnifiedRealtimeQuote 对象，获取失败返回 None
         """
         import yfinance as yf
+        import pandas as pd
 
-        # 美股指数：使用映射（SPX -> ^GSPC）
+        # 美股/加股指数：使用映射
         yf_symbol, index_name = get_us_index_yf_symbol(stock_code)
         if yf_symbol:
             return self._get_us_index_realtime_quote(
