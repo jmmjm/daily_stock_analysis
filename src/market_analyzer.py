@@ -617,8 +617,8 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             else:
                 title = item.get("title", "-") or "-"
                 snippet = item.get("snippet", "") or ""
-            title = self._escape_table_cell(str(title).strip()[:42])
-            signal = self._escape_table_cell(str(snippet).strip().replace("\n", " ")[:58] or "-")
+            title = self._escape_table_cell(str(title).strip()[:100])
+            signal = self._escape_table_cell(str(snippet).strip().replace("\n", " ")[:150] or "-")
             lines.append(f"| {idx} | {title} | {signal} |")
         return "\n".join(lines)
 
