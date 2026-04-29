@@ -14,7 +14,7 @@
 
 import logging
 from datetime import date, datetime
-from typing import Optional, Set
+from typing import Optional, Set, List
 from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
