@@ -128,12 +128,9 @@ class MarketAnalyzer:
         self.strategy = get_market_strategy_blueprint(self.region)
 
     def _get_review_language(self) -> str:
-        configured = normalize_report_language(
+        return normalize_report_language(
             getattr(getattr(self, "config", None), "report_language", "zh")
         )
-        if self.region == "us":
-            return "en"
-        return configured
 
     def _get_template_review_language(self) -> str:
         return normalize_report_language(
@@ -143,7 +140,7 @@ class MarketAnalyzer:
     def _get_market_scope_name(self, review_language: str | None = None) -> str:
         review_language = review_language or self._get_review_language()
         if self.region == "us":
-            return "US market"
+            return "US market" if review_language == "en" else "美股市场"
         if review_language == "en":
             return "A-share market"
         return "A股市场"
@@ -382,7 +379,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             logger.info("[大盘] 开始搜索市场新闻...")
             
             # 根据 region 设置搜索上下文名称，避免美股搜索被解读为 A 股语境
-            market_name = "大盘" if self.region == "cn" else "US market"
+            market_name = "大盘" if self.region == "cn" else ("US market" if self._get_review_language() == "en" else "美股大盘")
             for query in search_queries:
                 response = self.search_service.search_stock_news(
                     stock_code="market",
