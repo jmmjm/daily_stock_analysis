@@ -160,6 +160,11 @@ class PortfolioPositionItem(BaseModel):
     market_value_base: float
     unrealized_pnl_base: float
     valuation_currency: str
+    price_source: str = "unknown"
+    price_provider: Optional[str] = None
+    price_date: Optional[str] = None
+    price_stale: bool = False
+    price_available: bool = True
 
 
 class PortfolioAccountSnapshot(BaseModel):

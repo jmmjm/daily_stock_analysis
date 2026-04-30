@@ -2013,10 +2013,10 @@ class Config:
         """解析大盘复盘市场区域，非法值记录警告后回退为 auto"""
         import logging
         v = (value or 'auto').strip().lower()
-        if v in ('cn', 'us', 'both', 'auto'):
+        if v in ('cn', 'us', 'hk', 'both', 'auto'):
             return v
         logging.getLogger(__name__).warning(
-            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'auto'（合法值：auto / cn / us / both）"
+            f"MARKET_REVIEW_REGION 配置值 '{value}' 无效，已回退为默认值 'auto'（合法值：auto / cn / hk / us / both）"
         )
         return 'auto'
 

@@ -41,7 +41,7 @@ English | [简体中文](../README.md) | [繁體中文](README_CHT.md)
 | Analysis | Multi-dimensional Analysis | Technicals, realtime quotes, chip distribution, news sentiment, announcements, capital flow, and fundamentals |
 | Market | Global Markets | A-shares, Hong Kong stocks, US stocks, US indices, and common ETFs |
 | Strategy | Market Strategy System | A-share review, US regime strategy, moving averages, Chan theory, Elliott wave, and sentiment-cycle support |
-| Review | Market Review | Daily market overview, index performance, breadth, and sector strength |
+| Review | Market Review | Daily market overview, index performance, breadth, and sector strength (supports cn / hk / us / both) |
 | Web | Dual-theme Workspace | Manual analysis, settings, task progress, history, backtest, and portfolio management |
 | Import | Smart Import & Autocomplete | Image, CSV/Excel, and clipboard import; search by code, name, pinyin, and aliases |
 | History | Report Management | Full Markdown reports, rerun analysis, history browsing, and batch management |

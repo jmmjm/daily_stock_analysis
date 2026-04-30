@@ -687,6 +687,10 @@ class PortfolioRepository:
     # Price / FX
     # ------------------------------------------------------------------
     def get_latest_close(self, symbol: str, as_of: date) -> Optional[float]:
+        close = self.get_latest_close_with_date(symbol=symbol, as_of=as_of)
+        return close[0] if close is not None else None
+
+    def get_latest_close_with_date(self, symbol: str, as_of: date) -> Optional[Tuple[float, date]]:
         with self.db.get_session() as session:
             row = session.execute(
                 select(StockDaily)
@@ -701,7 +705,7 @@ class PortfolioRepository:
             ).scalar_one_or_none()
             if row is None or row.close is None:
                 return None
-            return float(row.close)
+            return float(row.close), row.date
 
     def save_fx_rate(
         self,

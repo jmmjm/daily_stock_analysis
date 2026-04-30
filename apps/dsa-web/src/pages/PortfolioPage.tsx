@@ -80,6 +80,31 @@ function formatPct(value: number | undefined | null): string {
   return `${value.toFixed(2)}%`;
 }
 
+function hasPositionPrice(row: PortfolioPositionItem): boolean {
+  return row.priceAvailable !== false && row.priceSource !== 'missing';
+}
+
+function formatPositionPrice(row: PortfolioPositionItem): string {
+  if (!hasPositionPrice(row)) return '--';
+  return row.lastPrice.toFixed(4);
+}
+
+function formatPositionMoney(value: number, row: PortfolioPositionItem): string {
+  if (!hasPositionPrice(row)) return '--';
+  return formatMoney(value, row.valuationCurrency);
+}
+
+function getPositionPriceLabel(row: PortfolioPositionItem): string {
+  if (!hasPositionPrice(row)) return '缺价';
+  if (row.priceSource === 'realtime_quote') {
+    return row.priceProvider ? `实时价 · ${row.priceProvider}` : '实时价';
+  }
+  if (row.priceSource === 'history_close') {
+    return row.priceStale && row.priceDate ? `收盘价 · ${row.priceDate}` : '收盘价';
+  }
+  return row.priceSource || '未知来源';
+}
+
 function formatSideLabel(value: PortfolioSide): string {
   return value === 'buy' ? '买入' : '卖出';
 }
@@ -979,10 +1004,23 @@ const PortfolioPage: React.FC = () => {
                       <td className="py-2 pr-2 font-mono text-foreground">{row.symbol}</td>
                       <td className="py-2 pr-2 text-right">{row.quantity.toFixed(2)}</td>
                       <td className="py-2 pr-2 text-right">{row.avgCost.toFixed(4)}</td>
-                      <td className="py-2 pr-2 text-right">{row.lastPrice.toFixed(4)}</td>
-                      <td className="py-2 pr-2 text-right">{formatMoney(row.marketValueBase, row.valuationCurrency)}</td>
-                      <td className={`py-2 text-right ${row.unrealizedPnlBase >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {formatMoney(row.unrealizedPnlBase, row.valuationCurrency)}
+                      <td className="py-2 pr-2 text-right">
+                        <div>{formatPositionPrice(row)}</div>
+                        <div className={`text-[11px] ${hasPositionPrice(row) ? 'text-secondary' : 'text-warning'}`}>
+                          {getPositionPriceLabel(row)}
+                        </div>
+                      </td>
+                      <td className="py-2 pr-2 text-right">{formatPositionMoney(row.marketValueBase, row)}</td>
+                      <td
+                        className={`py-2 text-right ${
+                          hasPositionPrice(row)
+                            ? row.unrealizedPnlBase >= 0
+                              ? 'text-success'
+                              : 'text-danger'
+                            : 'text-secondary'
+                        }`}
+                      >
+                        {formatPositionMoney(row.unrealizedPnlBase, row)}
                       </td>
                     </tr>
                   ))}

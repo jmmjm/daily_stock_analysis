@@ -46,21 +46,36 @@ def get_market_for_stock(code: str) -> Optional[str]:
     Infer market region for a stock code.
 
     Returns:
-        'cn' | 'hk' | 'us' | None (None = unrecognized, fail-open: treat as open)
+        "cn", "hk", "us", or None if unparseable
     """
-    if not code or not isinstance(code, str):
+    if not code:
         return None
-    code = (code or "").strip().upper()
-
-    from data_provider import is_us_stock_code, is_us_index_code, is_hk_stock_code
-
-    if is_us_stock_code(code) or is_us_index_code(code) or code.endswith(".TO"):
-        return "us"
-    if is_hk_stock_code(code):
-        return "hk"
-    # A-share: 6-digit numeric
-    if code.isdigit() and len(code) == 6:
+    c = code.upper()
+    if c.startswith("SH") or c.startswith("SZ") or c.startswith("BJ"):
         return "cn"
+    if c.startswith("HK"):
+        return "hk"
+    # Longbridge format: .US / .HK
+    if c.endswith(".US"):
+        return "us"
+    if c.endswith(".HK"):
+        return "hk"
+    if c.endswith(".TO") or c.endswith(".V"):
+        # Canada map to US timezone/exchange
+        return "us"
+    
+    # 纯数字，如果是5位数，常见为港股
+    if c.isdigit():
+        if len(c) == 5:
+            return "hk"
+        # 6位数字：如果首位是 6、0、3、4、8 通常是 A 股
+        if len(c) == 6 and c[0] in ("6", "0", "3", "4", "8"):
+            return "cn"
+
+    # US tickers: APPL, MSFT, TSLA, SPY, QQQ (letters, no explicit market prefix)
+    if c.isalpha() or "^" in c:
+        return "us"
+        
     return None
 
 
@@ -136,7 +151,7 @@ def get_effective_trading_date(
 
     ex = MARKET_EXCHANGE.get(market or "")
     tz_name = MARKET_TIMEZONE.get(market or "")
-    if not ex or not tz_name:
+    if not ex or tz_name is None:
         return fallback_date
 
     try:
@@ -186,6 +201,19 @@ def get_open_markets_today() -> Set[str]:
     return result
 
 
+def _is_market_review_enabled_for_market(config_region: str, market: str) -> bool:
+    """
+    Check if the user config enables market review for a specific market.
+    config_region: cn | hk | us | both | auto
+    """
+    if config_region == "both":
+        return True
+    if config_region == "auto":
+        # auto delegates to later logic, we return True here to mean "potentially enabled"
+        return True
+    return config_region == market
+
+
 def compute_effective_region(
     config_region: str, open_markets: Set[str], stock_codes: Optional[List[str]] = None
 ) -> Optional[str]:
@@ -193,16 +221,16 @@ def compute_effective_region(
     Compute effective market review region given config, open markets, and analyzed stocks.
 
     Args:
-        config_region: From MARKET_REVIEW_REGION ('auto' | 'cn' | 'us' | 'both')
+        config_region: From MARKET_REVIEW_REGION ('auto' | 'cn' | 'hk' | 'us' | 'both')
         open_markets: Markets open today
         stock_codes: Analyzed stock codes to infer region if config is 'auto'
 
     Returns:
         None: caller uses config default (check disabled)
         '': all relevant markets closed, skip market review
-        'cn' | 'us' | 'both': effective subset for today
+        'cn' | 'hk' | 'us' | 'cn,us' etc: effective subset for today
     """
-    if config_region not in ("auto", "cn", "us", "both"):
+    if config_region not in ("auto", "cn", "hk", "us", "both"):
         config_region = "auto"
         
     if config_region == "auto":
@@ -212,28 +240,37 @@ def compute_effective_region(
                 mkt = get_market_for_stock(code)
                 if mkt == "cn":
                     stock_markets.add("cn")
-                elif mkt in ("us", "hk"):
+                elif mkt == "hk":
+                    stock_markets.add("hk")
+                elif mkt == "us":
                     stock_markets.add("us")
                     
-            if "cn" in stock_markets and "us" in stock_markets:
+            parts = []
+            if "cn" in stock_markets:
+                parts.append("cn")
+            if "hk" in stock_markets:
+                parts.append("hk")
+            if "us" in stock_markets:
+                parts.append("us")
+                
+            if len(parts) > 1:
                 config_region = "both"
-            elif "us" in stock_markets:
-                config_region = "us"
+            elif len(parts) == 1:
+                config_region = parts[0]
             else:
                 config_region = "cn"
         else:
             config_region = "cn"
 
-    if config_region == "cn":
-        return "cn" if "cn" in open_markets else ""
-    if config_region == "us":
-        return "us" if "us" in open_markets else ""
-    # both
-    parts = []
-    if "cn" in open_markets:
-        parts.append("cn")
-    if "us" in open_markets:
-        parts.append("us")
+    if config_region in ("cn", "hk", "us"):
+        return config_region if config_region in open_markets else ""
+    
+    # both: return only the markets that are actually open today
+    parts = [m for m in ("cn", "hk", "us") if m in open_markets]
+
     if not parts:
         return ""
-    return "both" if len(parts) == 2 else parts[0]
+    if len(parts) == 1:
+        return parts[0]
+    return ",".join(parts)
+

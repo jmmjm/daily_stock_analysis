@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { agentApi } from '../api/agent';
 import type { ChatSessionItem, ChatStreamRequest } from '../api/agent';
 import {
-  createParsedApiError,
   getParsedApiError,
   isApiRequestError,
   isParsedApiError,
@@ -34,6 +33,45 @@ export interface Message {
 
 export interface StreamMeta {
   skillName?: string;
+}
+
+type StreamFailureEvent = {
+  type: string;
+  success?: boolean;
+  content?: string;
+  error?: unknown;
+  message?: unknown;
+};
+
+function getFirstMeaningfulStreamError(...candidates: Array<unknown>): unknown {
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string') {
+      if (candidate.trim() !== '') {
+        return candidate;
+      }
+      continue;
+    }
+
+    if (candidate != null) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function getStreamFailureError(
+  event: StreamFailureEvent,
+  fallbackMessage: string,
+): ParsedApiError {
+  return getParsedApiError(
+    getFirstMeaningfulStreamError(
+      event.error,
+      event.message,
+      event.content,
+      fallbackMessage,
+    ),
+  );
 }
 
 interface AgentChatState {
@@ -216,38 +254,22 @@ export const useAgentChatStore = create<AgentChatState & AgentChatActions>((set,
       let buf = '';
       let finalContent: string | null = null;
       const currentProgressSteps: ProgressStep[] = [];
-      const processLine = (line: string) => {
-        if (!line.startsWith('data: ')) return;
+        const processLine = (line: string) => {
+          if (!line.startsWith('data: ')) return;
 
-        const event = JSON.parse(line.slice(6)) as ProgressStep;
-        if (event.type === 'done') {
-          const doneEvent = event as unknown as {
-            type: string;
-            success: boolean;
-            content?: string;
-            error?: string;
-          };
-          if (doneEvent.success === false) {
-            const parsedStreamError = getParsedApiError(
-              doneEvent.error ||
-                doneEvent.content ||
-                '大模型调用出错，请检查 API Key 配置',
-            );
-            throw createParsedApiError({
-              title: '问股执行失败',
-              message: parsedStreamError.message,
-              rawMessage: parsedStreamError.rawMessage,
-              status: parsedStreamError.status,
-              category: parsedStreamError.category,
-            });
+          const event = JSON.parse(line.slice(6)) as ProgressStep;
+          if (event.type === 'done') {
+            const doneEvent = event as unknown as StreamFailureEvent;
+            if (doneEvent.success === false) {
+              throw getStreamFailureError(doneEvent, '大模型调用出错，请检查 API Key 配置');
+            }
+            finalContent = doneEvent.content ?? '';
+            return;
           }
-          finalContent = doneEvent.content ?? '';
-          return;
-        }
 
-        if (event.type === 'error') {
-          throw getParsedApiError(event.message || '分析出错');
-        }
+          if (event.type === 'error') {
+            throw getStreamFailureError(event as unknown as StreamFailureEvent, '分析出错');
+          }
 
         currentProgressSteps.push(event);
         set((s) => ({ progressSteps: [...s.progressSteps, event] }));

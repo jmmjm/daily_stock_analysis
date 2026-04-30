@@ -38,6 +38,11 @@ export interface PortfolioPositionItem {
   marketValueBase: number;
   unrealizedPnlBase: number;
   valuationCurrency: string;
+  priceSource?: 'realtime_quote' | 'history_close' | 'missing' | string;
+  priceProvider?: string | null;
+  priceDate?: string | null;
+  priceStale?: boolean;
+  priceAvailable?: boolean;
 }
 
 export interface PortfolioAccountSnapshot {
