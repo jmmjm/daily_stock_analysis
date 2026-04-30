@@ -150,6 +150,20 @@ class YfinanceFetcher(BaseFetcher):
             logger.warning(f"无法确定股票 {code} 的市场，默认使用深市")
             return f"{code}.SZ"
 
+    def get_stock_name(self, stock_code: str) -> Optional[str]:
+        """获取股票名称"""
+        try:
+            import yfinance as yf
+            yf_symbol = self._convert_stock_code(stock_code)
+            ticker = yf.Ticker(yf_symbol)
+            info = ticker.info
+            name = info.get("shortName") or info.get("longName")
+            if name:
+                return name
+        except Exception as e:
+            logger.debug(f"通过 yfinance 获取股票名称失败 {stock_code}: {e}")
+        return None
+
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=30),
