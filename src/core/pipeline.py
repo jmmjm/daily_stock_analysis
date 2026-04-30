@@ -28,10 +28,9 @@ from data_provider import DataFetcherManager
 from data_provider.base import normalize_stock_code
 from data_provider.realtime_types import ChipDistribution
 from src.analyzer import GeminiAnalyzer, AnalysisResult, fill_chip_structure_if_needed, fill_price_position_if_needed
-from src.data.stock_mapping import STOCK_NAME_MAP
+
 from src.notification import NotificationService, NotificationChannel
 from src.report_language import (
-    get_unknown_text,
     localize_confidence_level,
     normalize_report_language,
 )
