@@ -14,5 +14,12 @@
 | {{ snapshot.get('price', 'N/A') }} | {{ snapshot.get('volume_ratio', 'N/A') }} | {{ snapshot.get('turnover_rate', 'N/A') }} | {{ snapshot.get('source', 'N/A') }} |
 {% endif %}
 
+{% if snapshot.get('pre_market_price') or snapshot.get('post_market_price') %}
+
+| {{ labels.pre_market_price_label }} | {{ labels.pre_market_change_pct_label }} | {{ labels.post_market_price_label }} | {{ labels.post_market_change_pct_label }} |
+|-------|---------|-------|---------|
+| {{ snapshot.get('pre_market_price', 'N/A') }} | {{ snapshot.get('pre_market_change_pct', 'N/A') }} | {{ snapshot.get('post_market_price', 'N/A') }} | {{ snapshot.get('post_market_change_pct', 'N/A') }} |
+{% endif %}
+
 {% endif %}
 {% endmacro %}
