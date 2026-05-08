@@ -746,12 +746,26 @@ class YfinanceFetcher(BaseFetcher):
             if high is not None and low is not None and prev_close is not None and prev_close > 0:
                 amplitude = ((high - low) / prev_close) * 100
 
-            # 获取股票名称
+            # 获取股票名称及盘前盘后数据
+            info = {}
+            name = STOCK_NAME_MAP.get(symbol, '')
             try:
-                info_name = ticker.info.get('shortName', '') or ticker.info.get('longName', '') or ''
-                name = info_name if is_meaningful_stock_name(info_name, symbol) else STOCK_NAME_MAP.get(symbol, '')
+                info = ticker.info
+                info_name = info.get('shortName', '') or info.get('longName', '') or ''
+                if is_meaningful_stock_name(info_name, symbol):
+                    name = info_name
             except Exception:
-                name = STOCK_NAME_MAP.get(symbol, '')
+                pass
+
+            pre_market_price = info.get("preMarketPrice")
+            pre_market_change_pct = info.get("preMarketChangePercent")
+            if pre_market_change_pct is not None:
+                pre_market_change_pct *= 100
+
+            post_market_price = info.get("postMarketPrice")
+            post_market_change_pct = info.get("postMarketChangePercent")
+            if post_market_change_pct is not None:
+                post_market_change_pct *= 100
 
             quote = UnifiedRealtimeQuote(
                 code=symbol,
@@ -773,6 +787,10 @@ class YfinanceFetcher(BaseFetcher):
                 pb_ratio=None,
                 total_mv=market_cap,
                 circ_mv=None,
+                pre_market_price=pre_market_price,
+                pre_market_change_pct=round(pre_market_change_pct, 2) if pre_market_change_pct is not None else None,
+                post_market_price=post_market_price,
+                post_market_change_pct=round(post_market_change_pct, 2) if post_market_change_pct is not None else None,
             )
 
             logger.info(f"[Yfinance] 获取美股 {symbol} 实时行情成功: 价格={price}")

@@ -148,6 +148,12 @@ class UnifiedRealtimeQuote:
     high_52w: Optional[float] = None        # 52周最高
     low_52w: Optional[float] = None         # 52周最低
     
+    # === 盘前/盘后数据 ===
+    pre_market_price: Optional[float] = None
+    pre_market_change_pct: Optional[float] = None
+    post_market_price: Optional[float] = None
+    post_market_change_pct: Optional[float] = None
+    
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典（过滤 None 值）"""
         result = {
@@ -161,7 +167,9 @@ class UnifiedRealtimeQuote:
             'volume_ratio', 'turnover_rate', 'amplitude',
             'open_price', 'high', 'low', 'pre_close',
             'pe_ratio', 'pb_ratio', 'total_mv', 'circ_mv',
-            'change_60d', 'high_52w', 'low_52w'
+            'change_60d', 'high_52w', 'low_52w',
+            'pre_market_price', 'pre_market_change_pct',
+            'post_market_price', 'post_market_change_pct'
         ]
         for f in optional_fields:
             val = getattr(self, f, None)

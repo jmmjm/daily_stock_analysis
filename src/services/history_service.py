@@ -915,4 +915,10 @@ class HistoryService:
                 formatted = HistoryService._safe_format_number(value, fmt)
                 lines.append(f"| {label} | {formatted} |")
 
+        if "pre_market_price" in snapshot:
+            lines.append(f"| {labels.get('pre_market_price_label', 'Pre-mkt Price')} | {snapshot.get('pre_market_price', 'N/A')} ({snapshot.get('pre_market_change_pct', 'N/A')}) |")
+        
+        if "post_market_price" in snapshot:
+            lines.append(f"| {labels.get('post_market_price_label', 'Post-mkt Price')} | {snapshot.get('post_market_price', 'N/A')} ({snapshot.get('post_market_change_pct', 'N/A')}) |")
+
         lines.extend(["", "---", ""])

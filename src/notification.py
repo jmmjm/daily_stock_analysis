@@ -1533,6 +1533,15 @@ class NotificationService(
                 f"{snapshot.get('turnover_rate', 'N/A')} | {display_source} |",
             ])
 
+        if "pre_market_price" in snapshot or "post_market_price" in snapshot:
+            lines.extend([
+                "",
+                f"| {labels['pre_market_price_label']} | {labels['pre_market_change_pct_label']} | {labels['post_market_price_label']} | {labels['post_market_change_pct_label']} |",
+                "|-------|---------|-------|---------|",
+                f"| {snapshot.get('pre_market_price', 'N/A')} | {snapshot.get('pre_market_change_pct', 'N/A')} | "
+                f"{snapshot.get('post_market_price', 'N/A')} | {snapshot.get('post_market_change_pct', 'N/A')} |",
+            ])
+
         lines.append("")
 
     def _should_use_image_for_channel(

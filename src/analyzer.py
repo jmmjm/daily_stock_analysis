@@ -2120,6 +2120,15 @@ class GeminiAnalyzer:
                 "turnover_rate": self._format_percent(realtime.get('turnover_rate')),
                 "source": getattr(realtime.get('source'), 'value', realtime.get('source', 'N/A')),
             })
+            
+            # 提取盘前盘后数据（如果有）
+            if realtime.get('pre_market_price') is not None:
+                snapshot['pre_market_price'] = self._format_price(realtime.get('pre_market_price'))
+                snapshot['pre_market_change_pct'] = self._format_percent(realtime.get('pre_market_change_pct'))
+                
+            if realtime.get('post_market_price') is not None:
+                snapshot['post_market_price'] = self._format_price(realtime.get('post_market_price'))
+                snapshot['post_market_change_pct'] = self._format_percent(realtime.get('post_market_change_pct'))
 
         return snapshot
 
