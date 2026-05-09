@@ -3,22 +3,22 @@ name: 每日股票分析
 on:
   # 定时触发 - 每天北京时间 18:00 (UTC 10:00)
   schedule:
-    - cron: '45 14 * * 1-5'     # 周一到周五，避开整点延迟，UTC 14:45 = 美西时间 07:45
-  
+    - cron: "45 14 * * 1-5" # 周一到周五，避开整点延迟，UTC 14:45 = 美西时间 07:45
+
   # 手动触发
   workflow_dispatch:
     inputs:
       mode:
-        description: '运行模式'
+        description: "运行模式"
         required: true
-        default: 'full'
+        default: "full"
         type: choice
         options:
-          - full          # 完整分析（股票+大盘）
-          - market-only   # 仅大盘复盘
-          - stocks-only   # 仅股票分析
+          - full # 完整分析（股票+大盘）
+          - market-only # 仅大盘复盘
+          - stocks-only # 仅股票分析
       force_run:
-        description: '强制运行（跳过交易日检查）'
+        description: "强制运行（跳过交易日检查）"
         required: false
         default: false
         type: boolean
@@ -33,29 +33,29 @@ jobs:
     runs-on: ubuntu-latest
     # 添加超时限制，防止任务卡死
     timeout-minutes: ${{ fromJSON(vars.ANALYSIS_TIMEOUT_MINUTES || '30') }}
-    
+
     steps:
       - name: 随机延迟（避免固定时间访问）
-        run: sleep $((RANDOM % 60))  # 随机延迟0-60秒启动
-      
+        run: sleep $((RANDOM % 60)) # 随机延迟0-60秒启动
+
       - name: 检出代码
         uses: actions/checkout@v5
-      
+
       - name: 设置 Python 环境
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
-          cache: 'pip'
-      
+          python-version: "3.11"
+          cache: "pip"
+
       - name: 安装依赖
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      
+
       - name: 创建必要目录
         run: |
           mkdir -p data logs reports
-          
+
       - name: 启动本地 SearXNG 搜索服务 (免费无限额)
         run: |
           mkdir -p searxng
@@ -71,7 +71,7 @@ jobs:
           EOF
           docker run -d --name searxng -p 8080:8080 -v $(pwd)/searxng:/etc/searxng searxng/searxng:latest
           sleep 10 # 等待服务启动
-          
+
       - name: 执行股票分析
         env:
           # ==========================================
@@ -95,8 +95,8 @@ jobs:
           GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
           GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
-          GEMINI_REQUEST_DELAY: '3.0'
-          
+          GEMINI_REQUEST_DELAY: "3.0"
+
           # AIHubMix（优先于 OPENAI_API_KEY，自动适配 base_url，推荐国内用户）
           AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
 
@@ -109,7 +109,7 @@ jobs:
           # DeepSeek
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_API_KEYS: ${{ secrets.DEEPSEEK_API_KEYS }}
-          
+
           # Anthropic / Claude
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEYS: ${{ secrets.ANTHROPIC_API_KEYS }}
@@ -155,6 +155,14 @@ jobs:
           LLM_AIHUBMIX_MODELS: ${{ vars.LLM_AIHUBMIX_MODELS || secrets.LLM_AIHUBMIX_MODELS }}
           LLM_AIHUBMIX_ENABLED: ${{ vars.LLM_AIHUBMIX_ENABLED || secrets.LLM_AIHUBMIX_ENABLED }}
           LLM_AIHUBMIX_EXTRA_HEADERS: ${{ vars.LLM_AIHUBMIX_EXTRA_HEADERS || secrets.LLM_AIHUBMIX_EXTRA_HEADERS }}
+
+          LLM_OPENROUTER_PROTOCOL: ${{ vars.LLM_OPENROUTER_PROTOCOL || secrets.LLM_OPENROUTER_PROTOCOL }}
+          LLM_OPENROUTER_BASE_URL: ${{ vars.LLM_OPENROUTER_BASE_URL || secrets.LLM_OPENROUTER_BASE_URL }}
+          LLM_OPENROUTER_API_KEY: ${{ secrets.LLM_OPENROUTER_API_KEY }}
+          LLM_OPENROUTER_API_KEYS: ${{ secrets.LLM_OPENROUTER_API_KEYS }}
+          LLM_OPENROUTER_MODELS: ${{ vars.LLM_OPENROUTER_MODELS || secrets.LLM_OPENROUTER_MODELS }}
+          LLM_OPENROUTER_ENABLED: ${{ vars.LLM_OPENROUTER_ENABLED || secrets.LLM_OPENROUTER_ENABLED }}
+          LLM_OPENROUTER_EXTRA_HEADERS: ${{ vars.LLM_OPENROUTER_EXTRA_HEADERS || secrets.LLM_OPENROUTER_EXTRA_HEADERS }}
 
           LLM_OPENAI_PROTOCOL: ${{ vars.LLM_OPENAI_PROTOCOL || secrets.LLM_OPENAI_PROTOCOL }}
           LLM_OPENAI_BASE_URL: ${{ vars.LLM_OPENAI_BASE_URL || secrets.LLM_OPENAI_BASE_URL }}
@@ -204,11 +212,11 @@ jobs:
           LONGBRIDGE_ENABLE_OVERNIGHT: ${{ vars.LONGBRIDGE_ENABLE_OVERNIGHT || secrets.LONGBRIDGE_ENABLE_OVERNIGHT }}
           LONGBRIDGE_PUSH_CANDLESTICK_MODE: ${{ vars.LONGBRIDGE_PUSH_CANDLESTICK_MODE || secrets.LONGBRIDGE_PUSH_CANDLESTICK_MODE }}
           LONGBRIDGE_PRINT_QUOTE_PACKAGES: ${{ vars.LONGBRIDGE_PRINT_QUOTE_PACKAGES || secrets.LONGBRIDGE_PRINT_QUOTE_PACKAGES }}
-          
+
           # ==========================================
           # 搜索服务
           # ==========================================
-          ANSPIRE_API_KEYS: ${{ secrets.ANSPIRE_API_KEYS }} 
+          ANSPIRE_API_KEYS: ${{ secrets.ANSPIRE_API_KEYS }}
           BOCHA_API_KEYS: ${{ secrets.BOCHA_API_KEYS }}
           TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
           SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
@@ -217,45 +225,45 @@ jobs:
           SEARXNG_BASE_URLS: "http://127.0.0.1:8080"
           # SEARXNG_BASE_URLS: ${{ secrets.SEARXNG_BASE_URLS }}
           SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
-          
+
           # ==========================================
           # 通知渠道（可同时配置多个，全部推送）
           # ==========================================
-          
+
           # 方式一：企业微信 Webhook
           WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
           WECHAT_MSG_TYPE: ${{ vars.WECHAT_MSG_TYPE || secrets.WECHAT_MSG_TYPE || 'markdown' }}
-          
+
           # 方式二：飞书 Webhook
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-          
+
           # 方式三：Telegram
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
-          
+
           # 方式四：邮件
           EMAIL_SENDER: ${{ vars.EMAIL_SENDER || secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVERS: ${{ vars.EMAIL_RECEIVERS || secrets.EMAIL_RECEIVERS }}
           EMAIL_SENDER_NAME: ${{ vars.EMAIL_SENDER_NAME || secrets.EMAIL_SENDER_NAME || 'daily_stock_analysis股票分析助手' }}
-          
+
           # 方式五：Pushover
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_API_TOKEN: ${{ secrets.PUSHOVER_API_TOKEN }}
-          
+
           # 方式六：PushPlus ⬅️ 新增！
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-          
+
           # 方式七：自定义 Webhook（钉钉、Bark、自建服务等）
           CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
           CUSTOM_WEBHOOK_BEARER_TOKEN: ${{ secrets.CUSTOM_WEBHOOK_BEARER_TOKEN }}
-          
+
           # 方式八：Discord
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_MAIN_CHANNEL_ID: ${{ secrets.DISCORD_MAIN_CHANNEL_ID }}
-          
+
           # 方式九：飞书云文档
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
@@ -278,7 +286,7 @@ jobs:
           # ==========================================
           STOCK_LIST: ${{ vars.STOCK_LIST || secrets.STOCK_LIST || '600519' }}
           MARKET_REVIEW_REGION: ${{ vars.MARKET_REVIEW_REGION || secrets.MARKET_REVIEW_REGION || 'auto' }}
-          
+
           # ==========================================
           # 运行配置 ⬅️ 新增！
           # ==========================================
@@ -288,7 +296,7 @@ jobs:
           MARKET_REVIEW_ENABLED: ${{ vars.MARKET_REVIEW_ENABLED || secrets.MARKET_REVIEW_ENABLED || 'true' }}
           ANALYSIS_DELAY: ${{ vars.ANALYSIS_DELAY || secrets.ANALYSIS_DELAY || '0' }}
           TRADING_DAY_CHECK_ENABLED: ${{ vars.TRADING_DAY_CHECK_ENABLED || secrets.TRADING_DAY_CHECK_ENABLED || 'true' }}
-          
+
           # ==========================================
           # 系统配置
           # ==========================================
@@ -300,7 +308,7 @@ jobs:
           # 可选值: tencent, akshare_sina, efinance, akshare_em, tushare
           # 如果有 Tushare Pro 高积分账号，可将 tushare 放在首位
           REALTIME_SOURCE_PRIORITY: ${{ vars.REALTIME_SOURCE_PRIORITY || 'tencent,akshare_sina,efinance,akshare_em' }}
-          
+
         run: |
           # 处理 LITELLM YAML 配置文件
           if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
@@ -314,7 +322,7 @@ jobs:
 
           # 判断运行模式
           MODE="${{ github.event.inputs.mode || 'full' }}"
-          
+
           echo "=========================================="
           echo "🚀 A股自选股智能分析系统"
           echo "=========================================="
@@ -367,7 +375,7 @@ jobs:
           echo "  Slack: $(([ -n "$SLACK_WEBHOOK_URL" ] || ([ -n "$SLACK_BOT_TOKEN" ] && [ -n "$SLACK_CHANNEL_ID" ])) && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "=========================================="
           echo ""
-          
+
           # 构建命令行参数
           FORCE_RUN_ARG=""
           if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
@@ -383,7 +391,7 @@ jobs:
           else
             python main.py $FORCE_RUN_ARG
           fi
-      
+
       - name: 上传分析报告
         uses: actions/upload-artifact@v6
         if: always()
@@ -393,7 +401,7 @@ jobs:
             reports/
             logs/
           retention-days: 30
-      
+
       - name: 显示运行结果
         if: always()
         run: |
